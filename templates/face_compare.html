@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>计算机视觉-人脸识别</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mystyle.css') }}">
+    <link rel="stylesheet" type="text/css" href="//at.alicdn.com/t/c/font_4607864_1oai68ehsqn.css"/>
+    <script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/2.1.3/jquery.min.js"></script>
+
+    <style>
+        .contents {
+            position: relative;
+            min-width: 980px;
+            min-height: 560px;
+            display: flex;
+            flex-direction: row;
+            text-align: center;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+        }
+
+        .contents div {
+            align-items: center;
+            align-content: center;
+            border: black solid 1px;
+            position: relative;
+        }
+
+        .content-left {
+            color: #000;
+            width: 360px;
+            height: 400px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .content-right {
+            width: 360px;
+            height: 400px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #image1, #image2 {
+            display: none;
+        }
+
+        #previewImage1, #previewImage2 {
+            display: none;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .iconfont {
+            font-size: 100px;
+            color: black;
+            cursor: pointer;
+        }
+
+        .progress-ring {
+            margin: 0 100px;
+        }
+
+        .progress-bar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            position: relative;
+
+            &::before {
+                content: attr(data-progress);
+                position: absolute;
+                inset: 8px;
+                background-color: #ffffff;
+                width: 85px;
+                height: 85px;
+                text-align: center;
+                line-height: 85px;
+                border-radius: 50%;
+                font-size: 18px;
+                color: #4489c5;
+            }
+        }
+
+        .progress-bar[data-progress^="0"] {
+            --start-angle: calc(360deg * (var(--progress) / 100));
+        }
+
+        #compareBtn {
+            width: 120px;
+            height: 50px;
+            position: absolute;
+            bottom: 10px;
+            padding: 10px 20px;
+            color: black;
+            border: black solid 1px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            background-color: white;
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            cursor: pointer;
+            display: none;
+            background-color: white;
+            border: black solid 1px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+<!-- 头部导航栏 -->
+<div class="header">
+    <ul class="nav-items-wrapper">
+        <li><a href="{{ url_for('index') }}">首页</a></li>
+        <li style="background-color: #4489c5;padding: 25px;font-weight: bolder;"><a href="{{ url_for('face_compare') }}" style="color: #ffffff">人脸比对</a></li>
+        <li><a href="{{ url_for('face_detect') }}">人脸检测</a></li>
+        <li><a href="{{ url_for('face_feature_analysis') }}">人脸特征</a></li>
+        <li><a href="{{ url_for('time_recognition') }}">实时识别</a></li>
+    </ul>
+    <div class="person">
+        <!-- 登录按钮 -->
+        {% if username %}
+        <a href="#" class="login-btn" id="loginBtn">{{ username }}</a>
+        {% else %}
+        <a href="{{ url_for('login') }}" class="login-btn" id="loginBtn">登 录</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="contents">
+    <!-- 左侧图片上传区域 -->
+    <div class="content-left">
+        <label for="image1"><i class="iconfont icon-jiahao"></i></label>
+        <input type="file" id="image1" onchange="previewImage('1')" accept="image/*">
+        <img id="previewImage1" src="#" alt="图片预览" style="display:none;">
+        <button class="delete-btn" onclick="deleteImage('1')">删除图片</button>
+    </div>
+
+    <!-- 中间的进度环和进度条 -->
+    <div class="progress-ring" style="border: none">
+        <div class="progress-bar" style="--progress: 0%; --last: 0%;" data-progress="0%"></div>
+        <p style="align-items: center;align-content: center;width: 102px"></p>
+    </div>
+
+    <!-- 右侧图片上传区域 -->
+    <div class="content-right">
+        <label for="image2"><i class="iconfont icon-jiahao"></i></label>
+        <input type="file" id="image2" onchange="previewImage('2')" accept="image/*">
+        <img id="previewImage2" src="#" alt="图片预览" style="display:none;">
+        <button class="delete-btn" onclick="deleteImage('2')">删除图片</button>
+    </div>
+
+    <!-- 开始对比按钮 -->
+    <button id="compareBtn" onclick="startCompare()">开始对比</button>
+</div>
+
+<div class="footer">
+    <!-- 页脚 -->
+    <div style="width: 220px">
+        <p style="margin-bottom: 10px;">产品及服务</p>
+        <a href="#" style="margin-right: 120px">平台优势</a>
+        <a href="#">广告类型</a>
+    </div>
+    <div style="width: 220px">
+        <p style="margin-bottom: 10px;">企业咨询</p>
+        <a href="#" style="margin-right: 120px">新闻资讯</a>
+        <a href="#">本地与支持</a>
+    </div>
+    <div style="width:220px">
+        <p style="margin-bottom: 10px;">商务合作</p>
+        <a href="#" style="margin-right: 120px"> 商家入驻</a>
+        <a href="#">服务市场摘要</a>
+    </div>
+    <div style="width: 220px">
+        <p style="margin-bottom: 10px;">关于我们</p>
+        <a href="#" style="margin-right: 120px">公司简介</a>
+        <a href="#">负责电话：400-600-6506</a>
+    </div>
+    <div style="padding:0">
+        <p>关注我们</p>
+        <i class="iconfont icon-erweima" style="color: white; font-size:60px;margin-left: 100px"></i>
+    </div>
+</div>
+
+<div id="logoutModal" class="modal">
+    <div class="modal-content">
+        <h2>退出登录</h2>
+        <p>确定要退出登录吗？</p>
+        <button id="confirmLogout">退出</button>
+        <button id="cancelLogout" class="cancel-btn">取消</button>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutModal = document.getElementById("logoutModal");
+    const confirmLogout = document.getElementById("confirmLogout");
+    const cancelLogout = document.getElementById("cancelLogout");
+
+    if (loginBtn) {
+        loginBtn.addEventListener("click", function(event) {
+            event.preventDefault();
+            if (loginBtn.textContent === "登 录") {
+                window.location.href = "{{ url_for('login') }}";
+            } else {
+                logoutModal.style.display = "block";
+            }
+        });
+    }
+
+    confirmLogout.addEventListener("click", function() {
+        window.location.href = "{{ url_for('logout') }}";
+    });
+
+    cancelLogout.addEventListener("click", function() {
+        logoutModal.style.display = "none";
+    });
+
+    window.addEventListener("click", function(event) {
+        if (event.target === logoutModal) {
+            logoutModal.style.display = "none";
+        }
+    });
+});
+
+function previewImage(image_id) {
+    const image = document.getElementById('image' + image_id);
+    const previewImage = document.getElementById('previewImage' + image_id);
+    const label = image_id == 1 ? document.querySelector('.content-left label') : document.querySelector('.content-right label');
+    const deleteBtn = document.getElementsByClassName("delete-btn").item(image_id - 1);
+
+    const file = image.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            previewImage.src = e.target.result;
+            previewImage.style.display = 'block';
+            previewImage.style.width = '100%';
+            label.style.display = 'none'
+            deleteBtn.style.display = 'block'
+        };
+        reader.readAsDataURL(file);
+    } else {
+        previewImage.src = '';
+        previewImage.style.display = 'none';
+        deleteBtn.style.display = 'none'
+    }
+}
+
+function deleteImage(imgId) {
+    document.getElementById("image" + imgId).value = '';
+    document.getElementById("previewImage" + imgId).src = '';
+    document.getElementById("previewImage" + imgId).style.display = 'none';
+    // 显示label
+    if (imgId == 1) {
+        document.querySelector('.content-left label').style.display = 'block';
+    } else {
+        document.querySelector('.content-right label').style.display = 'block';
+    }
+    // 根据 imageid 获取兄弟元素 .delete-btn 按钮
+    document.getElementsByClassName("delete-btn").item(imgId - 1).style.display = 'none';
+}
+
+// 获取进度条元素
+const progressElement = document.querySelector('.progress-bar');
+
+// 动态设置进度条进度的函数
+function setProgress(progress) {
+    progressElement.style.setProperty('--progress', progress);
+    progressElement.setAttribute('data-progress', progress);
+
+    // 当进度小于20%时，调整--start-angle
+    if (progress < '20%') {
+        progressElement.style.setProperty('--start-angle', `calc(360deg * (${progress} / 100))`);
+    } else {
+        progressElement.style.setProperty('--start-angle', '0deg');
+    }
+}
+
+function startCompare() {
+    let newProgress = '0%';
+    if (!image1.files[0] || !image2.files[0]) {
+        alert("请先上传图片")
+    } else {
+        document.querySelector('.progress-ring p').innerText = "正在识别，请耐心等待..."
+        let formData = new FormData();
+        formData.append('image1', image1.files[0]);
+        formData.append('image2', image2.files[0]);
+
+        $.ajax({
+            url: "/face_compare",
+            type: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (data) {
+                if (data.ret === 0) {
+                    newProgress = (data.score * 100).toFixed(2) + "%"
+                    setProgress(newProgress);
+                    document.querySelector('.progress-ring p').innerText = data.score > 0.75 ? '相似度较高' : '相似度较低';
+                } else {
+                    alert("网络问题，请稍后再试");
+                }
+            },
+            error: function (xhr, status, error) {
+                alert("请求失败，错误信息：" + error);
+            }
+        });
+    }
+}
+</script>
+
+</body>
+</html>

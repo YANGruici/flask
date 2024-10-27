@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>计算机视觉-人脸识别</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mystyle.css') }}">
+    <link rel="stylesheet" type="text/css" href="//at.alicdn.com/t/c/font_4607864_1oai68ehsqn.css"/>
+    <style>
+        .contents {
+            min-width: 980px;
+            min-height: 560px;
+            display: flex;
+            flex-direction: row;
+        }
+        .contents div {
+            min-width: 490px;
+            min-height: 280px;
+        }
+        .content-left {
+            background-color: #333333;
+            color: #fff;
+            width: 60%;
+            margin-left: 100px;
+            align-items: center;
+            align-content: center;
+        }
+        .content-left p, span {
+            margin: 60px 80px 0 80px;
+            line-height: 1.8em;
+        }
+        .content-right {
+            width: 40%;
+            margin-right: 50px;
+        }
+        .content-right img {
+            min-width: 380px;
+            min-height: 490px;
+            width: 490px;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <ul class="nav-items-wrapper">
+        <!-- 导航栏 -->
+        <li style="background-color: #4489c5;padding: 25px;font-weight: bolder;"><a href="{{ url_for('index') }}" style="color: #ffffff">首页</a></li>
+        <li><a href="{{ url_for('face_compare') }}">人脸比对</a></li>
+        <li><a href="{{ url_for('face_detect') }}">人脸检测</a></li>
+        <li><a href="{{ url_for('face_feature_analysis') }}">人脸特征</a></li>
+        <li><a href="{{ url_for('time_recognition') }}">实时识别</a></li>
+    </ul>
+    <div class="person">
+        <!-- 登录按钮 -->
+        {% if username %}
+        <a href="#" class="login-btn" id="loginBtn">{{ username }}</a>
+        {% else %}
+        <a href="{{ url_for('login') }}" class="login-btn" id="loginBtn">登 录</a>
+        {% endif %}
+    </div>
+</div>
+<div class="contents">
+    <div class="content-left">
+        <!-- 左侧内容 -->
+        <p>人脸识别（Face Recognition），是一项提取人脸特征信息进行智能分析的生物识别技术，识别率高达99.4%，比肉眼更准确。MSCSDK中人脸识别（IdentityVerifier）功能，</p>
+        <p>（1）人脸验证（Face Verification）——1:1 相似度对比 通过提取两张人脸的特征，进行相似度对比，最终返回相应的置信度得分，系统根据特征匹配程度决定“拒绝”或者“接受”。用于判断两个输入人脸是否属于同一人。</p>
+        <p>（2）人脸检索（Face Detection）——1:N相似度对比 在大规模人脸数据库中快速找出与待检索人脸相似度最高的一个或多个人脸。</p>
+    </div>
+    <div class="content-right">
+        <!-- 右侧图片 -->
+        <img src="{{ url_for('static', filename='images/face-demo.png') }}">
+    </div>
+</div>
+<div class="footer">
+    <!-- 页脚 -->
+    <div style="width: 220px">
+        <p style="margin-bottom: 10px;">产品及服务</p>
+        <a href="#" style="margin-right: 120px">平台优势</a>
+        <a href="#">广告类型</a>
+    </div>
+    <div style="width: 220px">
+        <p style="margin-bottom: 10px;">企业咨询</p>
+        <a href="#" style="margin-right: 120px">新闻资讯</a>
+        <a href="#">本地与支持</a>
+    </div>
+    <div style="width:220px">
+        <p style="margin-bottom: 10px;">商务合作</p>
+        <a href="#" style="margin-right: 120px">商家入驻</a>
+        <a href="#">服务市场摘要</a>
+    </div>
+    <div style="width: 220px">
+        <p style="margin-bottom: 10px;">关于我们</p>
+        <a href="#" style="margin-right: 120px">公司简介</a>
+        <a href="#">负责电话：400-600-6506</a>
+    </div>
+    <div style="padding:0">
+        <p>关注我们</p>
+        <i class="iconfont icon-erweima" style="color: white; font-size:60px;margin-left: 100px"></i>
+    </div>
+</div>
+<div id="logoutModal" class="modal">
+    <div class="modal-content">
+        <h2>退出登录</h2>
+        <p>确定要退出登录吗？</p>
+        <button id="confirmLogout">退出</button>
+        <button id="cancelLogout" class="cancel-btn">取消</button>
+    </div>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutModal = document.getElementById("logoutModal");
+    const confirmLogout = document.getElementById("confirmLogout");
+    const cancelLogout = document.getElementById("cancelLogout");
+
+    if (loginBtn) {
+        loginBtn.addEventListener("click", function(event) {
+            event.preventDefault();
+            if (loginBtn.textContent === "登 录") {
+                window.location.href = "{{ url_for('login') }}";
+            } else {
+                logoutModal.style.display = "block";
+            }
+        });
+    }
+
+    confirmLogout.addEventListener("click", function() {
+        window.location.href = "{{ url_for('logout') }}";
+    });
+
+    cancelLogout.addEventListener("click", function() {
+        logoutModal.style.display = "none";
+    });
+
+    window.addEventListener("click", function(event) {
+        if (event.target === logoutModal) {
+            logoutModal.style.display = "none";
+        }
+    });
+});
+</script>
+</body>
+</html>

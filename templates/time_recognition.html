@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>计算机视觉-人脸识别</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mystyle.css') }}">
+    <link rel="stylesheet" type="text/css" href="//at.alicdn.com/t/c/font_4607864_1oai68ehsqn.css"/>
+    <script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/2.1.3/jquery.min.js"></script>
+    <script src="{{ url_for('static',filename='js/camera_control.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script src="//unpkg.com/layui@2.9.8/dist/layui.js"></script>
+    <style>
+        .contents {
+            position: relative;
+            min-width: 980px;
+            min-height: 560px;
+            display: flex;
+            flex-direction: row;
+            text-align: center;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            background-color: #f0f0f0;
+        }
+        .content-left, .content-right {
+            width: 360px;
+            height: 400px;
+            border: black solid 1px;
+            position: relative;
+            justify-content: center;
+            align-items: center;
+            align-content: center;
+        }
+
+         .progress-ring {
+            margin: 0 151px;
+        }
+        .camera-controls {
+            margin-top: 20px;
+            text-align: center;
+        }
+       #photos {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            padding: 10px;
+        }
+        #photos img {
+            margin-right: 10px;
+            border: 1px solid #ccc;
+        }
+        .header{
+            background-color: gray;
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <ul class="nav-items-wrapper">
+        <li><a href="{{ url_for('index') }}">首页</a></li>
+        <li><a href="{{ url_for('face_compare') }}">人脸比对</a></li>
+        <li><a href="{{ url_for('face_detect') }}">人脸检测</a></li>
+        <li><a href="{{ url_for('face_feature_analysis') }}">人脸特征</a></li>
+        <li style="background-color: #4489c5;padding: 25px;font-weight: bolder;">
+            <a href="{{ url_for('time_recognition') }}" style="color: #ffffff">实时识别</a></li>
+    </ul>
+    <div class="person">
+        {% if username %}
+        <a href="#" class="login-btn" id="loginBtn">{{ username }}</a>
+        {% else %}
+        <a href="{{ url_for('login') }}" class="login-btn" id="loginBtn">登 录</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="contents">
+    <div class="content-left">
+        <video id="camera-stream-left" width="360" height="400" autoplay ></video>
+    </div>
+      <div class="progress-ring" style="border: none;">
+    </div>
+    <div class="content-right" >
+        <canvas id="camera-stream-right" width="360" height="270" style="object-fit: contain"></canvas>
+    </div>
+</div>
+<fieldset>
+  <legend>人脸信息</legend>
+  <div class="layui-field-box" id="face-info">
+    未检测到人脸
+  </div>
+</fieldset>
+
+<div class="camera-controls">
+    <button id="start">开启摄像头</button>
+    <button id="stop">关闭摄像头</button>
+    <button id="capture">拍照</button>
+    <button id="clearAll">清空照片</button>
+    <button id="training">开始训练</button>
+    <input type="text" id="folderName" placeholder="输入用户名">
+    <button id="upload">上传照片</button>
+</div>
+
+<div id="photos"></div>
+<div class="footer">
+    <!-- 页脚 -->
+    <div style="width: 220px">
+        <p style="margin-bottom: 10px;">产品及服务</p>
+        <a href="#" style="margin-right: 120px">平台优势</a>
+        <a href="#">广告类型</a>
+    </div>
+    <div style="width: 220px">
+        <p style="margin-bottom: 10px;">企业咨询</p>
+        <a href="#" style="margin-right: 120px">新闻资讯</a>
+        <a href="#">本地与支持</a>
+    </div>
+    <div style="width:220px">
+        <p style="margin-bottom: 10px;">商务合作</p>
+        <a href="#" style="margin-right: 120px">商家入驻</a>
+        <a href="#">服务市场摘要</a>
+    </div>
+    <div style="width: 220px">
+        <p style="margin-bottom: 10px;">关于我们</p>
+        <a href="#" style="margin-right: 120px">公司简介</a>
+        <a href="#">负责电话：400-600-6506</a>
+    </div>
+    <div style="padding:0">
+        <p>关注我们</p>
+        <i class="iconfont icon-erweima" style="color: white; font-size:60px;margin-left: 100px"></i>
+    </div>
+</div><script>
+
+document.addEventListener("DOMContentLoaded", function() {
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutModal = document.getElementById("logoutModal");
+    const confirmLogout = document.getElementById("confirmLogout");
+    const cancelLogout = document.getElementById("cancelLogout");
+
+    if (loginBtn) {
+        loginBtn.addEventListener("click", function(event) {
+            event.preventDefault();
+            if (loginBtn.textContent === "登 录") {
+                window.location.href = "{{ url_for('login') }}";
+            } else {
+                logoutModal.style.display = "block";
+            }
+        });
+    }
+
+    confirmLogout.addEventListener("click", function() {
+        window.location.href = "{{ url_for('logout') }}";
+    });
+
+    cancelLogout.addEventListener("click", function() {
+        logoutModal.style.display = "none";
+    });
+
+    window.addEventListener("click", function(event) {
+        if (event.target === logoutModal) {
+            logoutModal.style.display = "none";
+        }
+    });
+});
+</script>
+</body>
+</html>

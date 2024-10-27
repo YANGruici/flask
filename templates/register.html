@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>计算机视觉-人脸识别</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mystyle.css') }}">
+    <link rel="stylesheet" type="text/css" href="//at.alicdn.com/t/c/font_4607864_1oai68ehsqn.css"/>
+    <style>
+        .contents {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 560px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container h2 {
+            margin-top: 30px;
+            margin-bottom: 30px;
+            font-size: 28px;
+            color: #333333;
+        }
+        .form-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+        .form-group label {
+            display: inline-block;
+            width: 100px;
+            text-align: right;
+            font-weight: bold;
+            margin-right: 20px;
+            color: #666666;
+        }
+        .form-group input {
+            padding: 10px;
+            width: 240px;
+            border: 1px solid #cccccc;
+            border-radius: 4px;
+        }
+        .btn-container {
+            margin-top: 30px;
+        }
+        .btn-container button {
+            padding: 12px 24px;
+            background-color: #4489c5;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn-container button:last-child {
+            margin-right: 0;
+        }
+        .error-message {
+            color: red;
+            font-size: 16px;
+            margin-top: 15px;
+        }
+        .success-message {
+            color: green;
+            font-size: 16px;
+            margin-top: 15px;
+        }
+        .form-image {
+            flex: 1;
+            text-align: center;
+            margin-right: 30px;
+        }
+        .form-image img {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <ul class="nav-items-wrapper">
+        <!-- 导航栏 -->
+        <li style="background-color: #4489c5;padding: 25px;font-weight: bolder;"><a href="{{ url_for('index') }}" style="color: #ffffff">首页</a></li>
+        <li><a href="{{ url_for('face_compare') }}">人脸比对</a></li>
+        <li><a href="{{ url_for('face_detect') }}">人脸检测</a></li>
+        <li><a href="{{ url_for('face_feature_analysis') }}">人脸特征</a></li>
+        <li><a href="{{ url_for('time_recognition') }}">实时识别</a></li>
+    </ul>
+</div>
+<div class="contents">
+    <div class="container">
+        <h2>用户注册</h2>
+        <div class="form-container">
+            <div class="form-image">
+                <img src="{{ url_for('static', filename='images/face-demo.png') }}" alt="User Image">
+            </div>
+            <div class="form-fields">
+                <form id="registerForm" action="/register" method="post">
+                    <div class="form-group">
+                        <label for="newUsername">用户名：</label>
+                        <input type="text" id="newUsername" name="newUsername" placeholder="请输入用户名" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newPassword">密码：</label>
+                        <input type="password" id="newPassword" placeholder="请输入密码" name="newPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">确认密码：</label>
+                        <input type="password" id="confirmPassword" placeholder="请再次确认密码"name="confirmPassword" required>
+                    </div>
+                    <div class="btn-container">
+                        <button type="submit" style="margin-right:250px;">注册</button>
+                        <button type="button" onclick="goToLogin()">返回登录</button>
+                    </div>
+                    <p id="registerMessage" class="error-message">{{ message }}</p>
+                    <p id="successMessage" class="success-message">{{ success_message }}</p>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="footer">
+    <!-- 页脚 -->
+    <div style="width: 220px">
+        <p style="margin-bottom: 10px;">产品及服务</p>
+        <a href="#" style="margin-right: 120px">平台优势</a>
+        <a href="#">广告类型</a>
+    </div>
+    <div style="width: 220px">
+        <p style="margin-bottom: 10px;">企业咨询</p>
+        <a href="#" style="margin-right: 120px">新闻资讯</a>
+        <a href="#">本地与支持</a>
+    </div>
+    <div style="width:220px">
+        <p style="margin-bottom: 10px;">商务合作</p>
+        <a href="#" style="margin-right: 120px">商家入驻</a>
+        <a href="#">服务市场摘要</a>
+    </div>
+    <div style="width: 220px">
+        <p style="margin-bottom: 10px;">关于我们</p>
+        <a href="#" style="margin-right: 120px">公司简介</a>
+        <a href="#">负责电话：400-600-6506</a>
+    </div>
+    <div style="padding:0">
+        <p>关注我们</p>
+        <i class="iconfont icon-erweima" style="color: white; font-size:60px;margin-left: 100px"></i>
+    </div>
+</div>
+<script>
+function goToLogin() {
+    window.location.href = "{{ url_for('login') }}";
+}
+</script>
+</body>
+</html>

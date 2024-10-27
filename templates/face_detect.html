@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>计算机视觉-人脸识别</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mystyle.css') }}">
+    <link rel="stylesheet" type="text/css" href="//at.alicdn.com/t/c/font_4607864_1oai68ehsqn.css"/>
+    <script src="//unpkg.com/layui@2.9.13/dist/layui.js"></script>
+
+    <style>
+        .contents {
+            position: relative;
+            min-width: 980px;
+            min-height: 560px;
+            display: flex;
+            flex-direction: row;
+            text-align: center;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+        }
+
+        .contents div {
+            align-items: center;
+        }
+
+        .content-left {
+            color: #000;
+            width: 360px;
+            height: 400px;
+            align-items: center;
+            align-content: center;
+            position: relative;
+            display: flex;
+            justify-content: center;
+        }
+
+        .content-right {
+            width: 360px;
+            height: 400px;
+            position: relative;
+        }
+
+        .progress-ring {
+            margin: 0 151px;
+        }
+
+        .container {
+            top: 42px;
+            height: 350px;
+            overflow: hidden;
+            overflow-y: scroll;
+            position: relative;
+        }
+
+        .detect-ret {
+            line-height: 2.0em;
+        }
+
+        #detectBtn {
+            width: 120px;
+            height: 50px;
+            position: absolute;
+            bottom: 10px;
+            padding: 10px 20px;
+            color: black;
+            border: black solid 1px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            background-color: white;
+        }
+
+        .iconfont {
+            font-size: 100px;
+            color: black;
+            cursor: pointer;
+        }
+
+        .item {
+            display: inline-block;
+            opacity: 0.5;
+            position: absolute;
+            left: 0;
+            top: 0;
+            background-image: linear-gradient(#a0ccee, #078ff6);
+            width: 100%;
+        }
+
+        #previewImage {
+            display: none;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .delete-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            cursor: pointer;
+            display: none;
+            background-color: white;
+            border: black solid 1px;
+            border-radius: 3px;
+        }
+
+        @keyframes myfirst {
+            0% {
+                height: 0px;
+            }
+            25% {
+                height: 25%;
+            }
+            50% {
+                height: 50%;
+            }
+            75% {
+                height: 75%;
+            }
+            100% {
+                height: 100%;
+            }
+        }
+
+        @-moz-keyframes myfirst /* Firefox */
+        {
+            0% {
+                height: 0px;
+            }
+            25% {
+                height: 25%;
+            }
+            50% {
+                height: 50%;
+            }
+            75% {
+                height: 75%;
+            }
+            100% {
+                height: 100%;
+            }
+        }
+
+        @-webkit-keyframes myfirst /* Safari and Chrome */
+        {
+            0% {
+                height: 0px;
+            }
+            25% {
+                height: 25%;
+            }
+            50% {
+                height: 50%;
+            }
+            75% {
+                height: 75%;
+            }
+            100% {
+                height: 100%;
+            }
+        }
+
+        @-o-keyframes myfirst /* Opera */
+        {
+            0% {
+                height: 0px;
+            }
+            25% {
+                height: 25%;
+            }
+            50% {
+                height: 50%;
+            }
+            75% {
+                height: 75%;
+            }
+            100% {
+                height: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- 头部导航栏 -->
+<div class="header"  >
+    <ul class="nav-items-wrapper">
+        <li><a href="{{ url_for('index') }}">首页</a></li>
+        <li><a href="{{ url_for('face_compare') }}">人脸比对</a></li>
+        <li style="background-color: #4489c5;padding: 25px;font-weight: bolder;"><a href="{{ url_for('face_detect') }}" style="color: #ffffff">人脸检测</a></li>
+        <li><a href="{{ url_for('face_feature_analysis') }}">人脸特征</a></li>
+        <li><a href="{{ url_for('time_recognition') }}">实时识别</a></li>
+    </ul>
+    <div class="person">
+        <!-- 登录按钮 -->
+        {% if username %}
+        <a href="#" class="login-btn" id="loginBtn">{{ username }}</a>
+        {% else %}
+        <a href="{{ url_for('login') }}" class="login-btn" id="loginBtn">登 录</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="contents" >
+    <!-- 左侧内容区域，包括上传图片功能 -->
+    <div class="content-left" style="border: black solid 1px">
+        <div class="item" ></div>
+        <label for="image"><i class="iconfont icon-jiahao"></i></label>
+        <input type="file" id="image" accept="image/*" hidden="hidden">
+        <img id="previewImage" src="#" alt="图片预览" style="display:none;">
+        <button  id="deleteImageBtn" class="delete-btn" onclick="deleteImage()">删除图片</button>
+    </div>
+
+    <div class="progress-ring" style="border: none;">
+    </div>
+
+    <!-- 右侧内容区域，显示识别结果 -->
+    <div class="content-right" style="border: black solid 1px">
+        <div style="font-size: 24px; font-family: 黑体; text-align: left; width: 320px; position: absolute; top: 15px; left: 10px; border: #333333 solid 1px; border-width: 0 0 1px 0;">
+            识别结果 <span id="face_count" style="font-size: 15px;margin-left: 70px">检测到 0 张人脸</span>
+        </div>
+        <div class="container" id="resultContainer">
+        </div>
+
+    </div>
+    <button id="detectBtn" onclick="startDetect()">开始检测</button>
+</div>
+
+<div class="footer">
+    <!-- 页脚 -->
+    <div style="width: 220px">
+        <p style="margin-bottom: 10px;">产品及服务</p>
+        <a href="#" style="margin-right: 120px">平台优势</a>
+        <a href="#">广告类型</a>
+    </div>
+    <div style="width: 220px">
+        <p style="margin-bottom: 10px;">企业咨询</p>
+        <a href="#" style="margin-right: 120px">新闻资讯</a>
+        <a href="#">本地与支持</a>
+    </div>
+    <div style="width:220px">
+        <p style="margin-bottom: 10px;">商务合作</p>
+        <a href="#" style="margin-right: 120px"> 商家入驻</a>
+        <a href="#">服务市场摘要</a>
+    </div>
+    <div style="width: 220px">
+        <p style="margin-bottom: 10px;">关于我们</p>
+        <a href="#" style="margin-right: 120px">公司简介</a>
+        <a href="#">负责电话：400-600-6506</a>
+    </div>
+    <div style="padding:0">
+        <p>关注我们</p>
+        <i class="iconfont icon-erweima" style="color: white; font-size:60px;margin-left: 100px"></i>
+    </div>
+</div>
+
+<div id="logoutModal" class="modal">
+    <div class="modal-content">
+        <h2>退出登录</h2>
+        <p>确定要退出登录吗？</p>
+        <button id="confirmLogout">退出</button>
+        <button id="cancelLogout" class="cancel-btn">取消</button>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutModal = document.getElementById("logoutModal");
+    const confirmLogout = document.getElementById("confirmLogout");
+    const cancelLogout = document.getElementById("cancelLogout");
+
+    if (loginBtn) {
+        loginBtn.addEventListener("click", function(event) {
+            event.preventDefault();
+            if (loginBtn.textContent === "登 录") {
+                window.location.href = "{{ url_for('login') }}";
+            } else {
+                logoutModal.style.display = "block";
+            }
+        });
+    }
+
+    confirmLogout.addEventListener("click", function() {
+        window.location.href = "{{ url_for('logout') }}";
+    });
+
+    cancelLogout.addEventListener("click", function() {
+        logoutModal.style.display = "none";
+    });
+
+    window.addEventListener("click", function(event) {
+        if (event.target === logoutModal) {
+            logoutModal.style.display = "none";
+        }
+    });
+});
+
+const image = document.getElementById('image');
+const previewImage = document.getElementById('previewImage');
+const label = document.querySelector('.content-left label');
+const deleteImageBtn = document.getElementById('deleteImageBtn');
+
+image.addEventListener('change', function (event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            previewImage.src = e.target.result;
+            previewImage.style.display = 'block';
+            label.style.display = 'none';
+            deleteImageBtn.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    } else {
+        previewImage.src = '';
+        previewImage.style.display = 'none';
+        label.style.display = 'block';
+        deleteImageBtn.style.display = 'none';
+    }
+});
+
+function deleteImage() {
+    previewImage.src = '';
+    previewImage.style.display = 'none';
+    deleteImageBtn.style.display = 'none'; // Hide delete button again
+    label.style.display = 'block';
+    image.value = '';
+
+    // 移除所有人脸框
+    document.querySelectorAll('.face-box').forEach(box => box.remove());
+}
+
+function displayResults(results) {
+    const resultContainer = document.getElementById('resultContainer');
+    const contentLeft = document.querySelector('.content-left');
+    const previewImage = document.getElementById('previewImage');
+    resultContainer.innerHTML = '';
+
+    if (results.face_num === 0) {
+        resultContainer.innerHTML = '<p>暂无数据</p>';
+        // Remove animation after detection
+        document.querySelector(".item").style.animation = "none";
+        return;
+    }
+
+    const faces = Object.values(results).filter(face => typeof face === 'object');
+    document.getElementById('face_count').textContent = `检测到 ${results.face_num} 张人脸`;
+
+    // 移除旧的框
+    contentLeft.querySelectorAll('.face-box').forEach(box => box.remove());
+
+    faces.forEach((face, index) => {
+        const detectRetDiv = document.createElement('div');
+        detectRetDiv.className = 'detect-ret';
+        detectRetDiv.innerHTML = `
+            <p>人脸${index + 1}</p>
+            <p>性别：${face.property?.gender === 1 ? '女性' : '男性'}</p>
+            <p>眼镜：${face.property?.glass === 1 ? '戴眼镜' : '不戴眼镜'}</p>
+            <p>胡须：${face.property?.beard === 1 ? '有胡须' : '没有胡须'}</p>
+            <p>发型：${face.property?.hair === 2 ? '长发' : face.property?.hair === 1 ? '短发' : '光头'}</p>
+            <p>口罩：${face.property?.mask === 1 ? '戴口罩' : '没戴口罩'}</p>
+            <p>表情：${face.property?.expression === 0 ? '惊讶' :
+                     face.property?.expression === 1 ? '害怕' :
+                     face.property?.expression === 2 ? '厌恶' :
+                     face.property?.expression === 3 ? '高兴' :
+                     face.property?.expression === 4 ? '悲伤' :
+                     face.property?.expression === 5 ? '生气' : '正常'}</p>
+        `;
+        resultContainer.appendChild(detectRetDiv);
+
+        // 计算相对于图片的缩放比例
+        const scaleX = previewImage.width / previewImage.naturalWidth;
+        const scaleY = previewImage.height / previewImage.naturalHeight;
+
+        // 添加人脸位置方框
+        const box = document.createElement('div');
+        box.className = 'face-box';
+        box.style.position = 'absolute';
+        box.style.border = '2px solid red';
+        box.style.left = `${face.x * scaleX}px`;
+        box.style.top = `${face.y * scaleY}px`;
+        box.style.width = `${face.w * scaleX}px`;
+        box.style.height = `${face.h * scaleY}px`;
+
+        // 添加人脸序号标签
+        const label = document.createElement('div');
+        label.style.position = 'absolute';
+        label.style.left = '0';
+        label.style.top = '0';
+        label.style.background = 'red';
+        label.style.color = 'white';
+        label.style.padding = '2px 5px';
+        label.innerText = index + 1;
+        box.appendChild(label);
+
+        contentLeft.appendChild(box);
+    });
+
+    // Remove animation after detection
+    document.querySelector(".item").style.animation = "none";
+}
+
+function startDetect() {
+    const file = image.files[0];
+    if (!file) {
+        alert("请先选择图片");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    fetch('/face_detect', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.ret === 0) {
+            displayResults(data.results);
+        } else {
+            alert("检测失败：" + data.error);
+            // Remove animation after detection failure
+            document.querySelector(".item").style.animation = "none";
+        }
+    })
+    .catch(error => {
+        console.error("Error:", error);
+        alert("检测失败，请重试");
+        // Remove animation after detection failure
+        document.querySelector(".item").style.animation = "none";
+    });
+
+    // 添加动画样式
+    document.querySelector(".item").style.animation = "myfirst 2s linear infinite";
+}
+
+
+</script>
+</body>
+</html>
